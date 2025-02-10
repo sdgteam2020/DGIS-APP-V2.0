@@ -50,7 +50,6 @@ namespace DGISApp
             Service1 service1 = new Service1();
             if (!await service1.HasInternetConnectionAsyncTest())
             {
-               // MyMessageBox.ShowDialog("For updating the DGIS App, ensure your PC is internet PC or standalone system. Download from ADN (" + ConfigurationManager.AppSettings["UrlForDGISDownloadFromADN"] + ") the DGIS App ZIP file, extract its contents, and run setup.exe to complete the update.");
             }
             else
             {

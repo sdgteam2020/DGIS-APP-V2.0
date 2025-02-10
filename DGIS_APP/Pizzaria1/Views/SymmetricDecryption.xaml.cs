@@ -268,22 +268,6 @@ namespace DGISApp
         }
 
 
-        static byte[] decryptdata(byte[] bytearraytodecrypt, byte[] key, byte[] iv, int KeySize)
-        {
-
-            AesCryptoServiceProvider keydecrypt = new AesCryptoServiceProvider();
-            keydecrypt.BlockSize = 128;
-            keydecrypt.KeySize = KeySize;
-            keydecrypt.Key = key;
-            keydecrypt.IV = iv;
-            keydecrypt.Padding = PaddingMode.PKCS7;
-            keydecrypt.Mode = CipherMode.CBC;
-            ICryptoTransform crypto1 = keydecrypt.CreateDecryptor(keydecrypt.Key, keydecrypt.IV);
-
-            byte[] returnbytearray = crypto1.TransformFinalBlock(bytearraytodecrypt, 0, bytearraytodecrypt.Length);
-            crypto1.Dispose();
-            return returnbytearray;
-        }
 
         private void btnOpenFiles_Click(object sender, RoutedEventArgs e)
         {

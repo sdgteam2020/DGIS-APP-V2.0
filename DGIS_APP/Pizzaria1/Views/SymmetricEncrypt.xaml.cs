@@ -90,16 +90,8 @@ namespace DGISApp
                     {
                         droppedFilePaths = e.Data.GetData(DataFormats.FileDrop, true) as string[];
 
-                        //System.Windows.Forms.FolderBrowserDialog saveFileDialog = new System.Windows.Forms.FolderBrowserDialog();
-
-                        //System.Windows.Forms.DialogResult result = saveFileDialog.ShowDialog();
-
-                        //if (result == System.Windows.Forms.DialogResult.OK)
-                        //{
-                        //    download = saveFileDialog.SelectedPath + @"\";
+                        
                             fileEncrypt(droppedFilePaths);
-
-                        //}
 
 
                     }
