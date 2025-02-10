@@ -326,7 +326,7 @@ namespace DGISApp
                     }
                 }
                 
-                string apiUrl = UrlApi+"/DigitalSignAsync";
+                string apiUrl = UrlApi+"/DigitalSignBulkAsync";
 
                 List<DigitalSignData> senddataList = new List<DigitalSignData>();
 
@@ -346,7 +346,7 @@ namespace DGISApp
                 var client = new HttpClient();
                 // var response = await client.PostAsync(apiUrl, content);
                 IService1 service1=new Service1();
-                var apiResponse = await service1.DigitalSignAsync(senddataList);
+                var apiResponse = await service1.DigitalSignBulkAsync(senddataList);
 
                 if (apiResponse != null)
                 {
@@ -2244,7 +2244,8 @@ namespace DGISApp
                 {
                     httpClient.Timeout = TimeSpan.FromSeconds(2);
                     //var request = new HttpRequestMessage(HttpMethod.Head, "https://google.com");
-                    var request = new HttpRequestMessage(HttpMethod.Head, "https://portal.army.mil");
+                   // var request = new HttpRequestMessage(HttpMethod.Head, "https://portal.army.mil"); old code
+                    var request = new HttpRequestMessage(HttpMethod.Head, ConfigurationManager.AppSettings["HasInternetConnection"]);
                     try
                     { 
                         var response = await httpClient.SendAsync(request);

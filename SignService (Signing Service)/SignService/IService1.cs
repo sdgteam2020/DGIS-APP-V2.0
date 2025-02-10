@@ -71,8 +71,12 @@ namespace SignService
 
         // Add to Sign PDF
         [OperationContract]
+        [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, UriTemplate = "/DigitalSignBulkAsync")]
+        Task<ResponseBulkSign> DigitalSignBulkAsync(List<DigitalSignData> reqData);  // Add to Sign PDF
+
+        [OperationContract]
         [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, UriTemplate = "/DigitalSignAsync")]
-        Task<ResponseBulkSign> DigitalSignAsync(List<DigitalSignData> reqData);
+        Task<ResponseMessage> DigitalSignAsync(List<DigitalSignData> reqData);
 
 
         // Add to Sign byte PDF

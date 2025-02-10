@@ -1,4 +1,6 @@
-﻿using iText.IO.Font;
+﻿using iText.Forms.Fields;
+using iText.Forms;
+using iText.IO.Font;
 using iText.IO.Font.Constants;
 using iText.IO.Image;
 using iText.Kernel.Font;
@@ -17,6 +19,7 @@ using Syncfusion.Pdf.Security;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -30,6 +33,7 @@ using System.Threading.Tasks;
 using System.Xml;
 using ValidateCertificate;
 using static iText.Signatures.PdfSigner;
+using Syncfusion.Pdf.Graphics;
 
 
 namespace SignService
@@ -1042,8 +1046,77 @@ namespace SignService
                 }
             }
         }
+        public async Task<ResponseMessage> DigitalSignAsync(List<DigitalSignData> reqData)
+        {
+            ResponseMessage responseMessage = new ResponseMessage();
+            ResponseBulkSign apiResponse = await DigitalSignBulkAsync(reqData);
 
-        public async Task<ResponseBulkSign> DigitalSignAsync(List<DigitalSignData> reqData)
+            if (apiResponse != null)
+            {
+                // string ResponseContent = await response.Content.ReadAsStringAsync();
+                //ResponseBulkSign apiResponse = JsonConvert.DeserializeObject<ResponseBulkSign>(ResponseContent);
+                string resultstring = "";
+                int count = 0;
+                int Signed = 0;
+                if (apiResponse.ResponseMessage != null)
+                {
+                    resultstring = "Congratulations!\n\nDocument is successfully Signed.\n";
+                    resultstring += apiResponse.ResponseMessage.Message + "\n";
+                    Signed = 1;
+                }
+                foreach (ResponseMessage data in apiResponse.ResponseMessagelst)
+                {
+
+                    if (count == 0)
+                    {
+                        resultstring += "\n Opps!\nDocument is Not successfully Signed.\n";
+                        resultstring += "This Docu Not Sign Either Password Protected or Page Not Found.\n";
+
+                        count++;
+                    }
+
+                    resultstring += data.Message + "\n ";
+
+
+
+
+
+                }
+                if (resultstring != "")
+                {
+                    if (Signed > 0)
+                    {
+                        responseMessage.Message = resultstring;
+                        responseMessage.Valid = true;
+
+                    }
+                    else
+                    {
+                        responseMessage.Message = resultstring;
+                        responseMessage.Valid = false;
+                    }
+
+                }
+                else
+                {
+                    if (apiResponse.ResponseMessage != null)
+                    {
+                        responseMessage.Message = $"Error:" + apiResponse.ResponseMessage.Message;
+                        responseMessage.Valid = false;
+
+                    }
+                }
+               
+            }
+            else
+            {
+                responseMessage.Message = $"Error:" + apiResponse.ResponseMessage.Message;
+                responseMessage.Valid = false;
+            }
+            return responseMessage;
+        }
+
+        public async Task<ResponseBulkSign> DigitalSignBulkAsync(List<DigitalSignData> reqData)
         {
             string message = null;
             ResponseBulkSign ResponseMsgbullst = new ResponseBulkSign();
@@ -1179,6 +1252,25 @@ namespace SignService
                                         }
                                         else
                                         {
+                                           var getXYaxis = GetSignatureCordinate(fileforloop);
+                                            if(getXYaxis!=null)
+                                            {
+                                                if(sigNames.Count%2==0)
+                                                {
+                                                    Yaxis = getXYaxis[sigNames.Count-1].YCoordinate + 50;
+                                                    Xaxis = getXYaxis[0].XCoordinate;
+                                                }
+                                                else
+                                                {
+                                                    Yaxis = getXYaxis[sigNames.Count - 1].YCoordinate;
+                                                    Xaxis = getXYaxis[sigNames.Count - 1].XCoordinate+200;
+                                                    if (Xaxis > 300)
+                                                    {
+                                                        Yaxis = getXYaxis[sigNames.Count - 1].YCoordinate + 50;
+                                                        Xaxis = getXYaxis[0].XCoordinate;
+                                                    }
+                                                }
+                                            }
                                             signer = new PdfSigner(reader, fileStream, stampProp.UseAppendMode());
                                         }
                                         PdfSignatureAppearance appearance = signer.GetSignatureAppearance()
@@ -1313,11 +1405,46 @@ namespace SignService
                 ResponseMsg.Message = "Error Occured in Signing Document " + ex.Message;
                 ResponseMsg.Valid = false;
                 ErrorLog.LogErrorToFile(ex);
-                ResponseMsgbullst.ResponseMessagelst.Add(ResponseMsg);
+                ResponseMsgbullst.ResponseMessage=ResponseMsg;
                 return ResponseMsgbullst;
             }
         }
+        public List<DigitalSignData> GetSignatureCordinate(string pdfPath)
+        {
+            List<DigitalSignData> lst = new List<DigitalSignData>();
+            using (PdfReader reader = new PdfReader(pdfPath))
+            {
+                using (PdfDocument pdfDoc = new PdfDocument(reader))
+                {
+                    PdfAcroForm acroForm = PdfAcroForm.GetAcroForm(pdfDoc, false);
+                    if (acroForm == null)
+                    {
+                        Console.WriteLine("No signature fields found.");
+                        return null;
+                    }
 
+                    IDictionary<string, PdfFormField> fields = acroForm.GetFormFields();
+
+                    foreach (var field in fields)
+                    {
+                        DigitalSignData digitalSignData = new DigitalSignData();
+                        if (field.Value is PdfSignatureFormField signatureField)
+                        {
+                            string signatureName = field.Key;
+                            var rect = signatureField.GetWidgets()[0].GetRectangle().ToRectangle();
+                            digitalSignData.XCoordinate = (int)rect.GetX();
+                            digitalSignData.YCoordinate = (int)rect.GetY();
+
+                            lst.Add(digitalSignData);
+                           // Console.WriteLine($"Signature: {signatureName}");
+                           // Console.WriteLine($"X: {rect.GetX()}, Y: {rect.GetY()}, Width: {rect.GetWidth()}, Height: {rect.GetHeight()}");
+                        }
+                    }
+                    return lst;
+                }
+            }
+            return null;
+        }
         public async Task<ResponseMessage> ByteDigitalSignAsync(List<DigitalSignData> reqData)
         {
             string message = null;
