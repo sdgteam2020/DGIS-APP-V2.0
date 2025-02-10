@@ -8,7 +8,6 @@ using iText.Kernel.Pdf;
 using iText.Layout;
 using iText.Signatures;
 using Microsoft.Office.Interop.Word;
-using Newtonsoft.Json;
 using Org.BouncyCastle.X509;
 using Syncfusion.DocIO.DLS;
 using Syncfusion.DocToPDFConverter;
