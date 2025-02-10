@@ -105,25 +105,7 @@ namespace SignService
 
                         xml1 = SignXML(xmlDoc, certificate);
 
-                        //XmlNode signatureNode = xml.GetElementsByTagName("Signature", SignedXml.XmlDsigNamespaceUrl)[0];
-                        //if (signatureNode != null)
-                        //{
-
-
-                        //    xml.LoadXml(value.OuterXml);
-
-
-                        //    XmlElement xmlElement = null;
-
-
-
-                        //    xmlElement = SignXML1(xml, certificate);
-
-                        //    XmlDocument newDoc = ConvertElementToXmlDocument(xmlElement);
-
-                        //    return newDoc.DocumentElement;
-                        //}
-
+                      
 
 
 
@@ -801,12 +783,12 @@ namespace SignService
                         MsgCrlOCSP = "Crl or OCSP is Revoked";
                         BlnCrlOCSP = false;
                     }
-
+                    
                     if (ValidateCertificateAsyncOutput == true)
                     {
                         var TokenDetails = new TokenDetails
                         {
-
+                           
                             API = "https://dgisapp.army.mil:55102/Temporary_Listen_Addresses/FetchTokenOCSPCrlDetailsAsync",
                             CRL_OCSPCheck = BlnCrlOCSP,
                             CRL_OCSPMsg = MsgCrlOCSP,
