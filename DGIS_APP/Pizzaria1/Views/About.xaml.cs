@@ -75,17 +75,6 @@ namespace DGISApp
             return version;
         }
 
-        private void BeginUpdate()
-        {
-            this.BusyBar.IsBusy = true;
-            ApplicationDeployment ad = ApplicationDeployment.CurrentDeployment;
-            ad.UpdateCompleted += new AsyncCompletedEventHandler(ad_UpdateCompleted);
-
-            // Indicate progress in the application's status bar.
-            ad.UpdateProgressChanged += new DeploymentProgressChangedEventHandler(ad_UpdateProgressChanged);
-            ad.UpdateAsync();
-        }
-
         void ad_UpdateProgressChanged(object sender, DeploymentProgressChangedEventArgs e)
         {
             String progressText = String.Format("{0:D}K out of {1:D}K downloaded - {2:D}% completed.", e.BytesCompleted / 1024, e.BytesTotal / 1024, e.ProgressPercentage);
@@ -115,14 +104,6 @@ namespace DGISApp
 
         private static String updaterModulePath="";
 
-        
-        private static void StartSilent()
-        {
-            Thread.Sleep(10000);
-
-            Process process = Process.Start(updaterModulePath, "/silent");
-            process.Close();
-        }
 
         public static bool IsConnectedToInternet()
         {
@@ -211,112 +192,7 @@ namespace DGISApp
                 _ = GetUpdateAsync();
             }
 
-            //if (IsConnectedToInternet())
-            //{
-            ////////////////////old code////////////
-            //UpdateCheckInfo info = null;
-
-            //if (ApplicationDeployment.IsNetworkDeployed)
-            //{
-            //    ApplicationDeployment deployment = ApplicationDeployment.CurrentDeployment;
-
-            //    var appId = new ApplicationIdentity(deployment.UpdatedApplicationFullName);
-            //    var unrestrictedPerms = new PermissionSet(PermissionState.Unrestricted);
-            //    var appTrust = new ApplicationTrust(appId)
-            //    {
-            //        DefaultGrantSet = new PolicyStatement(unrestrictedPerms),
-            //        IsApplicationTrustedToRun = true,
-            //        Persist = true
-            //    };
-
-            //    ApplicationSecurityManager.UserApplicationTrusts.Add(appTrust);
-
-            //    ApplicationDeployment ad = ApplicationDeployment.CurrentDeployment;
-
-            //    try
-            //    {
-            //        ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
-            //        info = ad.CheckForDetailedUpdate();
-
-            //    }
-
-            //    catch (DeploymentDownloadException dde)
-            //    {
-            //        MyMessageBox.ShowDialog(dde.Message);
-
-            //        return;
-            //    }
-            //    catch (InvalidDeploymentException ide)
-            //    {
-            //        MyMessageBox.ShowDialog("No update found as update repository is not reachable. Kindly contact application Administrator. \n Error: " + ide.Message);
-            //        return;
-            //    }
-            //    catch (InvalidOperationException ioe)
-            //    {
-            //        MyMessageBox.ShowDialog("This application cannot be updated. It is likely not a ClickOnce application. Error: " + ioe.Message);
-            //        return;
-            //    }
-
-            //    catch (Exception ex)
-            //    {
-            //        MyMessageBox.ShowDialog(ex.Message);
-            //    }
-            //    if (info.UpdateAvailable)
-            //    {
-            //        Boolean doUpdate = true;
-
-            //        if (!info.IsUpdateRequired)
-            //        {
-            //            string result = MyMessageBox.ShowDialog("New update is found ! \n\n Update will take few minutes. Would you like to continue ?", MyMessageBox.Buttons.Yes_No);
-
-            //            if (result == "0")
-            //            {
-            //                doUpdate = false;
-
-            //            }
-
-
-            //        }
-            //        else
-            //        {
-            //            // Display a message that the app MUST reboot. Display the minimum required version.
-            //            MyMessageBox.ShowDialog("Attention ! \n\n Mandatory update found for your current " +
-            //                "version to version " + info.MinimumRequiredVersion.ToString() + ". The application will install the update and restart.");
-            //        }
-
-            //        if (doUpdate)
-            //        {
-            //            try
-            //            {
-            //                BeginUpdate();
-
-
-
-            //            }
-            //            catch (DeploymentDownloadException dde)
-            //            {
-            //                MyMessageBox.ShowDialog("Cannot install the latest version of the application. \n\nPlease check your network connection, or try again later. Error: " + dde);
-            //                return;
-            //            }
-            //        }
-
-            //    }
-            //    else
-            //    {
-            //        MyMessageBox.ShowDialog("DGIS App is already updated.");
-            //    }
-            //}
-            //else
-            //{
-            //    MyMessageBox.ShowDialog("DGIS App is not deployed on network.");
-            //}
-
-            ////////////////////End Code////////////////////////
-            //}
-            //else
-            //{
-            //    MyMessageBox.ShowDialog("Application updated cannot be done in Offline mode.");
-            //}
+          
         }
         public async Task GetUpdateAsync()
         {

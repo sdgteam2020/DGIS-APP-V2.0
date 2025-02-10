@@ -57,20 +57,12 @@ namespace DGISApp
                 String NVersion = "";
                 String url = Baseurl + "/api/transaction/CountUser";
                 IPAddress[] a = Dns.GetHostByName(Dns.GetHostName()).AddressList;
-                //if (!System.Diagnostics.Debugger.IsAttached)
-                //{
-                //    ApplicationDeployment ad = ApplicationDeployment.CurrentDeployment;
-                //    NVersion = ad.CurrentVersion.ToString();
-                //}
+              
                 Assembly assembly = Assembly.GetEntryAssembly();
                 NVersion = assembly.GetName().Version.ToString();//ConfigurationManager.AppSettings["Version"].ToString();
                 string ip = a[0].ToString() + ", " + Dns.GetHostName() + "," + NVersion;
 
-                //if (!System.Diagnostics.Debugger.IsAttached)
-                //{
-                //    ApplicationDeployment ad = ApplicationDeployment.CurrentDeployment;
-                //    NVersion = ad.CurrentVersion.ToString();
-                //}
+               
                     
                 var request =  WebRequest.Create(url);
                 request.Method = "POST";

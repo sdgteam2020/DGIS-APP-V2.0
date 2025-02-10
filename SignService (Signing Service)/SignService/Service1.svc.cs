@@ -55,58 +55,6 @@ namespace SignService
             return string.Format("You entered: 0");
         }
 
-        //public XmlElement SignXml1(XmlElement value)
-        //{
-        //    try
-        //    {
-        //        X509Certificate2Collection fcollection = GetCertificates();
-
-        //        if (fcollection.Count == 0)
-        //        {
-        //            string message = "No Token Found";
-        //            XmlDocument xml = new XmlDocument();
-        //            xml.LoadXml("<Root>" + message + "</Root>");
-        //            return xml.DocumentElement;
-
-        //        }
-        //        else
-        //        {
-        //            X509Certificate2 cert1 = null;
-        //            if (fcollection.Count == 1)
-        //            {
-        //                cert1 = fcollection[0];
-        //            }
-        //            else if (fcollection.Count > 1)
-        //            {
-        //                cert1 = X509Certificate2UI.SelectFromCollection(fcollection, "Caption", "Message", X509SelectionFlag.SingleSelection)[0];
-        //            }
-        //            X509Certificate2 certificate = cert1;
-
-
-        //            string result = "Success";
-        //            if (result == "Success")
-        //            {
-        //                XmlDocument xml = new XmlDocument();
-        //                xml.LoadXml(value.OuterXml);
-        //                XmlDocument xml1 = SignXML(xml, certificate);
-
-        //                return xml1.DocumentElement;
-        //            }
-        //            else
-        //            {
-        //                XmlDocument xml = new XmlDocument();
-        //                xml.LoadXml(result);
-        //                return xml.DocumentElement;
-        //            }
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        XmlDocument xml = new XmlDocument();
-        //        xml.LoadXml(ex.Message);
-        //        return xml.DocumentElement;
-        //    }
-        //}
         public async Task<XmlElement> SignXml(XmlElement value)
         {
             try
@@ -220,20 +168,7 @@ namespace SignService
                 signed.KeyInfo = keyInfo;
                 signed.ComputeSignature();
                 XmlElement xmlSig = signed.GetXml();
-                // Create an XmlDocument instance
-                //XmlDocument xmlDoc = new XmlDocument();
-                //int count =0;
-                //var signatureNode = doc.GetElementsByTagName("Signature", SignedXml.XmlDsigNamespaceUrl);
-                //// Count the number of Signature elements
-                //count = signatureNode.Count+1;
-
-                //XmlElement root = xmlDoc.CreateElement("DigitalSignature"+ count);
-                //xmlDoc.AppendChild(root);
-                //xmlDoc.DocumentElement.AppendChild(xmlDoc.ImportNode(xmlSig, true));
-
-
-
-                //doc.DocumentElement.AppendChild(doc.ImportNode(xmlDoc.DocumentElement, true));
+               
 
                 doc.DocumentElement.AppendChild(doc.ImportNode(xmlSig, true));
                 return doc;
@@ -257,50 +192,7 @@ namespace SignService
                
             }
         }
-        //public static XmlDocument SignXML1(XmlDocument doc, X509Certificate2 cert)
-        //{
-        //    try
-        //    {
-        //        SignedXml signed = new SignedXml(doc);
-
-        //        var rsaKey = cert.GetRSAPrivateKey();
-        //        signed.SigningKey = cert.PrivateKey;
-
-        //        Reference reference = new Reference();
-        //        reference.Uri = "";
-        //        reference.AddTransform(new XmlDsigEnvelopedSignatureTransform());
-        //        signed.AddReference(reference);
-
-        //        KeyInfo keyInfo = new KeyInfo();
-        //        keyInfo.AddClause(new KeyInfoX509Data(cert));
-
-        //        signed.KeyInfo = keyInfo;
-        //        signed.ComputeSignature();
-        //        XmlElement xmlSig = signed.GetXml();
-
-        //        doc.DocumentElement.AppendChild(doc.ImportNode(xmlSig, true));
-
-        //        return doc;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        // Get the root element
-        //        XmlNode rootElement = doc.SelectSingleNode("/SignXmlRequest/XmlData/RootElement");
-        //        XmlElement Exception = doc.CreateElement("Exception");
-        //        Exception.InnerText = ex.Message.ToString();
-        //        // Add the new element to the root element
-        //        if ("Hi" != null)
-        //        {
-        //            rootElement.AppendChild(Exception);
-        //        }
-        //        // Convert the modified XML document back to an XML string
-        //        return doc;
-        //        //return modifiedXmlDoc;
-
-
-        //    }
-        //}
-
+       
         public CompositeType GetDataUsingDataContract(CompositeType composite)
         {
             if (composite == null)
@@ -1158,13 +1050,13 @@ namespace SignService
 
                 X509Certificate2 cert1 = certCollection[0];
 
-                //if (DateTime.Now > cert1.NotAfter)
-                //{
-                //    ResponseMsg.Message = "Token Expired !";
-                //    ResponseMsg.Valid = false;
-                //    ResponseMsglst.Add(ResponseMsg);
-                //    return ResponseMsglst;
-                //}
+                if (DateTime.Now > cert1.NotAfter)
+                {
+                    ResponseMsg.Message = "Token Expired !";
+                    ResponseMsg.Valid = false;
+                    ResponseMsgbullst.ResponseMessage = ResponseMsg;
+                    return ResponseMsgbullst;
+                }
 
 
                 string[] files = Directory.GetFiles(reqData.First().InputFileLoc);
@@ -1436,9 +1328,7 @@ namespace SignService
                             digitalSignData.YCoordinate = (int)rect.GetY();
 
                             lst.Add(digitalSignData);
-                           // Console.WriteLine($"Signature: {signatureName}");
-                           // Console.WriteLine($"X: {rect.GetX()}, Y: {rect.GetY()}, Width: {rect.GetWidth()}, Height: {rect.GetHeight()}");
-                        }
+                                }
                     }
                     return lst;
                 }
@@ -1478,12 +1368,12 @@ namespace SignService
 
                 X509Certificate2 cert1 = certCollection[0];
 
-                //if (DateTime.Now > cert1.NotAfter)
-                //{
-                //    ResponseMsg.Message = "Token Expired !";
-                //    ResponseMsg.Valid = false;
-                //    return ResponseMsg;
-                //}
+                if (DateTime.Now > cert1.NotAfter)
+                {
+                    ResponseMsg.Message = "Token Expired !";
+                    ResponseMsg.Valid = false;
+                    return ResponseMsg;
+                }
 
 
 
@@ -1754,15 +1644,7 @@ namespace SignService
                     }
                     X509Certificate2 certificate = cert1;
                     Console.WriteLine("Public Key: {0}{1}", cert1.PublicKey.Key.ToXmlString(false), Environment.NewLine);
-                    //string result = ValidateCertificate.ValidateCert.CheckCertificate(cert1, null);
-
-                    //if (result == "Success")
-                    //{
-                    //    IExternalSignature es = new ValidateCertificate.X509Certificate2Signature(cert1, "SHA-1", ref status);
-                    //    if (status != null)
-                    //    {
-                    //        return status;
-                    //    }
+                   
                         RSACryptoServiceProvider csp = (RSACryptoServiceProvider)certificate.PrivateKey;
 
                         byte[] data = new ASCIIEncoding().GetBytes(message);
@@ -1984,17 +1866,7 @@ namespace SignService
                             ret.DigestRemarks = "Reference " + count + " digest is Invalid because the computed digest differs from the digest in the XML";
                         }
                     }
-                    //else
-                    //{
-                    //    // Handle the case when a valid URI is provided (resolve the reference and verify as usual)
-                    //    XmlElement referencedElement = xmlDoc.SelectSingleNode(reference.Uri) as XmlElement;
-                    //    if (referencedElement == null)
-                    //    {
-                    //        return($"Referenced element not found for URI: {reference.Uri}");
-                    //    }
-
-                    //    // Continue with the usual process to verify the reference with a valid URI...
-                    //}
+                   
                 }
 
             }

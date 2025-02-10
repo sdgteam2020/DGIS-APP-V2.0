@@ -215,25 +215,7 @@ namespace CertificateInstaller
                 string command = $@"echo {ipAddress} {hostName} >> %windir%\System32\drivers\etc\hosts";
                 ExecuteNetshCommand(command);
                 return true;
-                //// Using netsh or command prompt to modify the hosts file
-                //var processInfo = new ProcessStartInfo
-                //{
-
-
-
-                //    FileName = "cmd.exe",
-                //    Arguments = $"/C {command}",
-                //    Verb = "runas", // Ensures the process runs with administrator privileges
-                //    UseShellExecute = true,
-                //    CreateNoWindow = true
-                //};
-
-                //// Start the process
-                //using (var process = Process.Start(processInfo))
-                //{
-                //    process.WaitForExit();
-                //    return process.ExitCode == 0;
-                //}
+               
             }
             catch (Exception ex)
             {

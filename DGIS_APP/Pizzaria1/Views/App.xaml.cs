@@ -43,27 +43,7 @@ namespace DGISApp
             return wp.IsInRole(WindowsBuiltInRole.Administrator);
         }
         ServiceHost host = null;
-        //private string RunPowerShellCommand(string command)
-        //{
-        //    using (PowerShell PowerShellInstance = PowerShell.Create())
-        //    {
-        //        // Add PowerShell script to execute
-        //        PowerShellInstance.AddScript(command);
-
-        //        // Execute the command and gather results
-        //        var results = PowerShellInstance.Invoke();
-
-        //        // Handle any errors
-        //        if (PowerShellInstance.Streams.Error.Count > 0)
-        //        {
-        //            string error = string.Join(Environment.NewLine, PowerShellInstance.Streams.Error);
-        //            return "Error: " + error;
-        //        }
-
-        //        // Format the output
-        //        return string.Join(Environment.NewLine, results);
-        //    }
-        //}
+       
         private static string ExecuteNetshCommand(string arguments)
         {
             try
@@ -144,21 +124,7 @@ namespace DGISApp
 
                     string programsFolderPath = Environment.GetFolderPath(Environment.SpecialFolder.StartMenu) + "//Programs//DGIS//1//DGIS App.appref-ms";
                     string startupFolderPath = Environment.GetFolderPath(Environment.SpecialFolder.Startup);
-                    //try
-                    //{
-                    //    CopyDirectory(programsFolderPath, startupFolderPath);
-
-                    //    String Url = "https://dgis.army.mil//App_Data//Cert//CCA India 2014.crt";
-                    //    String url1 = "https://dgis.army.mil//App_Data//Cert//IA sub-CA for Class 3 2014.crt";
-                    //    String url2 = "https://dgis.army.mil//App_Data//Cert//IACA 2014.crt";
-                    //    String url3 = "https://dgis.army.mil//App_Data//Cert//IASUBCA2022FORCLASS3.crt";
-                    //    updateCert(DownloadCert(Url), "");
-                    //    updateCert(DownloadCert(url1), "");
-                    //    updateCert(DownloadCert(url2), "");
-                    //    updateCert(DownloadCert(url3), "");
-                    //}
-                    //catch
-                    //{ }
+                   
 
                     System.Windows.Forms.NotifyIcon DGISIcon = new System.Windows.Forms.NotifyIcon();
                     DGISIcon.Icon = new Icon(System.Reflection.Assembly.GetEntryAssembly().Location.ToString().Replace("\\DGISAPP.exe", "") + "\\DigiSign.ico");
@@ -171,10 +137,7 @@ namespace DGISApp
 
                     wnd.Show();
                 }
-                //else
-                //{
-                //    wnd.Show();
-                //}
+                
                
                 if (Convert.ToInt32(ConfigurationManager.AppSettings["IsOldDGISExits"]) <= 10)
                 {
@@ -275,41 +238,7 @@ namespace DGISApp
             File.Copy(sourceDir, destPath, true);
         }
 
-        ////private void CopyDirectory(string sourceDir, string destDir)
-        ////{
-        ////    if (!Directory.Exists(destDir))
-        ////    {
-        ////        Directory.CreateDirectory(destDir);
-        ////    }
-        ////    string fileName = sourceDir;
-
-        ////    string destPath = Path.Combine(destDir, "DGIS App.appref-ms");
-
-        ////    File.Copy(sourceDir, destPath, true);
-
-        ////    //foreach (string file in Directory.GetFiles(sourceDir))
-        ////    //{
-        ////    //    string fileName = Path.GetFileName(file);
-        ////    //    string destPath = Path.Combine(destDir, fileName);
-        ////    //    File.Copy(file, destPath, true);
-        ////    //}
-        ////}
-        //private void DeleteFileName(string destDir)
-        //{
-        //    try
-        //    {
-        //        string fileName = destDir + "\\DGIS App.appref-ms";
-        //        if (File.Exists(fileName))
-        //        {
-        //            File.Delete(fileName);
-        //        }
-        //    }
-        //    catch
-        //    {
-
-        //    }
-        //}
-
+       
         void Open_Click(object sender, EventArgs e)
         {
             MainWindow.Visibility = Visibility.Visible;
