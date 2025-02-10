@@ -267,33 +267,6 @@ namespace DGISApp
 
 
 
-                    ////bool isConnected = await HasInternetConnectionAsyncTest();
-                    ////if (isConnected)
-                    ////{
-
-                    ////}
-                    ////else
-                    ////{
-                    ////    if (RDefault.IsChecked == true)
-                    ////    {
-                    ////        if (ChkBulkSign.IsChecked == true)
-                    ////        {
-                    ////            BulkDigitalSig(droppedFilePaths[0]);
-                    ////        }
-                    ////        else
-                    ////        {
-                    ////            onlineDigitalSig(droppedFilePaths);
-                    ////        }
-                    ////    }
-                    ////    else
-                    ////    {
-                    ////        Card1.Width = 750;
-                    ////        pdfviewer.Visibility = Visibility.Visible;
-                    ////        LoadPdf(droppedFilePaths);
-                    ////    }
-
-                    ////}
-
                 }
             }
             catch (Exception ex)
@@ -541,83 +514,7 @@ namespace DGISApp
             }
         }
 
-        private static byte[] SignXMLDocument(byte[] xmlDocumentBuffer, X509Certificate2 certificate, string signedXMLPath)
-        {
-            // Load xmlDocument data in to an XML Document
-            XmlDocument xmlDocument = new XmlDocument();
-            string xml = Encoding.UTF8.GetString(xmlDocumentBuffer);
-            xmlDocument.LoadXml(xml);
 
-            // Sign the XML document using the certificate private key
-            using (var rsaKey = certificate.PrivateKey)
-            {
-                var signedXml = new SignedXml(xmlDocument);
-                signedXml.SigningKey = rsaKey;
-
-                var reference = new Reference();
-                reference.Uri = "";
-
-                var env = new XmlDsigEnvelopedSignatureTransform();
-                reference.AddTransform(env);
-
-                signedXml.AddReference(reference);
-
-                signedXml.ComputeSignature();
-
-                var xmlDigitalSignature = signedXml.GetXml();
-
-                xmlDocument.DocumentElement.AppendChild(xmlDocument.ImportNode(xmlDigitalSignature, true));
-            }
-
-            StringWriter stringWriter = new StringWriter();
-            XmlTextWriter xmlTextWriter = new XmlTextWriter(stringWriter);
-
-            // Save Xml Document to Text Writter.
-            xmlDocument.WriteTo(xmlTextWriter);
-            UTF8Encoding encoding = new UTF8Encoding();
-
-            // Convert Xml Document To Byte Array.
-            byte[] xmlDocumentBuffer1 = encoding.GetBytes(stringWriter.ToString());
-
-            XmlSerializer mySerializer = new XmlSerializer(typeof(byte[]));
-
-            using (MemoryStream myFileStream = new MemoryStream(xmlDocumentBuffer1))
-            {
-                return (byte[])mySerializer.Deserialize(myFileStream);
-            }
-        }
-
-        private static byte[] DeserializeXMLToImage(XmlDocument xmlDocument)
-        {
-            StringWriter stringWriter = new StringWriter();
-            XmlTextWriter xmlTextWriter = new XmlTextWriter(stringWriter);
-
-            // Save Xml Document to Text Writter.
-            xmlDocument.WriteTo(xmlTextWriter);
-            UTF8Encoding encoding = new UTF8Encoding();
-
-            // Convert Xml Document To Byte Array.
-            byte[] xmlDocumentBuffer = encoding.GetBytes(stringWriter.ToString());
-
-            XmlSerializer mySerializer = new XmlSerializer(typeof(byte[]));
-
-            using (MemoryStream myFileStream = new MemoryStream(xmlDocumentBuffer))
-            {
-                return (byte[])mySerializer.Deserialize(myFileStream);
-            }
-        }
-
-        private static byte[] SerializeImageToXML(byte[] imageBuffer)
-        {
-            XmlSerializer x = new XmlSerializer(typeof(byte[]));
-
-            using (MemoryStream myFileStream = new MemoryStream())
-            {
-                x.Serialize(myFileStream, imageBuffer);
-
-                return myFileStream.ToArray();
-            }
-        }
         public static byte[] Sign(byte[] data, X509Certificate2 certificate)
         {
             using (var key = certificate.GetRSAPrivateKey())
@@ -857,35 +754,7 @@ namespace DGISApp
                     MyMessageBox.ShowDialog(ex.Message);
                 ErrorLog.LogErrorToFile(ex);
             }
-            //}
-            //else
-            //{
-            //    OpenFileDialog openFileDialog = new OpenFileDialog();
-               
-            //    openFileDialog.Filter = "files (*.pdf;*.PDF;*.docx;*.DOCX;*.doc;*.DOC)|*.pdf;*.PDF;*.docx;*.DOCX,*.doc; *.DOC";
-              
-            //    if (ConfigurationManager.AppSettings["LastSelectedLocation"] == "")
-            //    {
-            //        openFileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-            //    }
-            //    else
-            //    {
-            //        openFileDialog.InitialDirectory = ConfigurationManager.AppSettings["LastSelectedLocation"];
-            //    }
-            //    if (openFileDialog.ShowDialog() == true)
-            //    {
-            //        if (RDefault.IsChecked == true)
-            //        {
-            //            onlineDigitalSig(openFileDialog.FileNames);
-            //        }
-            //        else
-            //        {   
-            //            Card1.Width = 750;
-            //            pdfviewer.Visibility = Visibility.Visible;
-            //            LoadPdf(openFileDialog.FileNames);
-            //        }
-            //    }
-            //}
+           
 
         }
 
@@ -2304,52 +2173,6 @@ namespace DGISApp
 
 
 
-        //Add for stamp
-        //ver 1.2.0.1 // 30-12-2022 by Nitesh Vishwkarma 
-
-        //Commented by Nitesh Vishwakarma as per Lt. Col. Sumit Negi's direction
-        //05-01-2023
-        // stop stamping
-
-        //public String pdfStamping(String PathofInputPdf="",String SignedBy="")
-        //{
-        //    string OutputPdf = "";
-
-        //    iText.Kernel.Pdf.PdfDocument pdfDocument = new iText.Kernel.Pdf.PdfDocument(new PdfReader(PathofInputPdf));
-        //    SignatureUtil signatureUtil = new SignatureUtil(pdfDocument);
-        //    IList<string> sigNames = signatureUtil.GetSignatureNames();
-
-        //    if (ChkStamping.IsChecked==true && sigNames.Count==0)
-        //    {
-        //        PdfLoadedDocument doc1 = new PdfLoadedDocument(PathofInputPdf);
-        //        pdfdoc.Load(doc1);
-        //        SizeF size = doc1.Pages[0].Size;
-        //        PageHeight = Convert.ToInt32(size.Height);
-        //        Syncfusion.Pdf.Graphics.PdfFont font = new Syncfusion.Pdf.Graphics.PdfStandardFont(Syncfusion.Pdf.Graphics.PdfFontFamily.TimesRoman, 10, Syncfusion.Pdf.Graphics.PdfFontStyle.Regular);
-        //        foreach (PdfPageBase page in doc1.Pages)
-        //        {
-        //            PdfRubberStampAnnotation loStamp = new PdfRubberStampAnnotation(new RectangleF(new PointF(5, (PageHeight - 70)), new SizeF(200, 80)));
-        //            PdfAppearance loApprearance = new PdfAppearance(loStamp);
-        //            Syncfusion.Pdf.Graphics.PdfImage image = Syncfusion.Pdf.Graphics.PdfImage.FromFile(System.Reflection.Assembly.GetEntryAssembly().Location.ToString().Replace("\\DGISAPP.exe", "") + "\\DigitalStamp.png");
-        //            Syncfusion.Pdf.Graphics.PdfTemplate template = new Syncfusion.Pdf.Graphics.PdfTemplate(200, 100);
-        //            template.Graphics.DrawImage(image, 0, 0, 80, 80);
-        //            template.Graphics.DrawString("Softcopy of this document \nis digitally signed by \n" + SignedBy + "\nOn " + DateTime.Now.ToString("dd-MMM-yyyy HH:mm"), font, Syncfusion.Pdf.Graphics.PdfBrushes.Black, new PointF(80, 0));
-
-        //            loApprearance.Normal = template;
-        //            loStamp.Appearance = loApprearance;
-        //            page.Annotations.Add(loStamp);
-        //        }
-        //        PathofInputPdf = Path.GetFileNameWithoutExtension(PathofInputPdf);
-        //        OutputPdf = System.IO.Path.GetTempPath() + "\\" + PathofInputPdf + ".pdf";
-        //        doc1.Save(OutputPdf);
-        //        doc1.Close();
-        //    }
-        //    else
-        //    {
-        //        OutputPdf = PathofInputPdf;
-        //    }
-
-        //    return OutputPdf; 
-        //}
+       
     }
 }
