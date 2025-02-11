@@ -162,12 +162,13 @@ namespace DGISApp
 
 
 
-        public bool IsConnectedToInternet()
+        public async Task<bool> IsConnectedToInternet()
         {
             
             if (ChkCrl.IsChecked == true)
             {
-                var hasInternetTask = HasInternetConnectionAsync();
+                IService1 service1 = new Service1();
+                var hasInternetTask =await service1.HasInternetConnectionAsyncTest();
                 if (hasInternetTask == true)
                 {
                     return true;
@@ -183,36 +184,36 @@ namespace DGISApp
             }
         }
 
-        static bool HasInternetConnectionAsync()
-        {
-            try
-            {
-                using (var httpClient = new HttpClient())
-                {
+        //static bool HasInternetConnectionAsync()
+        //{
+        //    try
+        //    {
+        //        using (var httpClient = new HttpClient())
+        //        {
 
-                    httpClient.Timeout = TimeSpan.FromSeconds(1); // Adjust the timeout as needed
+        //            httpClient.Timeout = TimeSpan.FromSeconds(1); // Adjust the timeout as needed
 
-                    var response = httpClient.GetAsync("https://portal.army.mil");
-                    //var response = httpClient.GetAsync("https://www.google.com");
+        //            var response = httpClient.GetAsync(ConfigurationManager.AppSettings["HasInternetConnection"]);
+        //            //var response = httpClient.GetAsync("https://www.google.com");
 
-                    // Check if the response status code indicates success
-                    if (response.Result.IsSuccessStatusCode)
-                    {
-                        return true;
-                    }
-                    else
-                    {
-                        return false;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MyMessageBox.ShowDialog("Error while executing HasInternetConnectionAsync Reason:- " + ex.Message);
-                return false; // Return false if the operation was cancelled due to network not connected
-            }
+        //            // Check if the response status code indicates success
+        //            if (response.Result.IsSuccessStatusCode)
+        //            {
+        //                return true;
+        //            }
+        //            else
+        //            {
+        //                return false;
+        //            }
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        MyMessageBox.ShowDialog("Error while executing HasInternetConnectionAsync Reason:- " + ex.Message);
+        //        return false; // Return false if the operation was cancelled due to network not connected
+        //    }
 
-        }
+        //}
 
         private void DropList_DragEnter(object sender, DragEventArgs e)
         {
@@ -306,8 +307,8 @@ namespace DGISApp
                
                     DigitalSignData senddata = new DigitalSignData();
                     senddata.Thumbprint = CertThumbPrint;
-                    senddata.InputFileLoc = Directory;
-                    senddata.OutputFileLoc = Directory;
+                    senddata.FolderLoc = Directory;
+                    senddata.OutputFolderLoc = Directory;
                     senddata.XCoordinate = x;
                     senddata.YCoordinate = y;
                     senddata.Page = Pagenumber;
@@ -774,487 +775,10 @@ namespace DGISApp
             public Boolean TokenValid { get; set; }
         }
 
-        public void SignDocumentOffline(string filename, int PageNum, int X = 0, int Y = 0, Boolean custom = false)
-        {
-            bool ErrorEncountered = false;
-            bool success = false;
-            string FileFullName = "";
-
-            X509Store store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
-            X509Certificate2Collection fcollection = new X509Certificate2Collection();
-            store.Open(OpenFlags.OpenExistingOnly);
-
-            foreach (X509Certificate2 cert in store.Certificates)
-            {
-                try
-                {
-                    if (!(cert.Subject.Contains("localhost") || cert.Subject.Contains("DESKTOP")))
-                    {
-                        if (cert.PrivateKey is RSACryptoServiceProvider rsaProvider && rsaProvider.CspKeyContainerInfo.HardwareDevice)
-                        {
-                            fcollection.Add(cert);
-                        }
-                    }
-                }
-                catch (CryptographicException)
-                {
-                    // Handle any exception when accessing the private key
-                    // You can log the error or skip this certificate
-                }
-            }
-            store.Close();
-
-
-            if (fcollection.Count == 0)
-            {
-                this.Dispatcher.Invoke(new Action(() => MyMessageBox.ShowDialog("No Certificate found")));
-                this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
-                this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
-                return;
-            }
-            else
-            {
-
-                X509Certificate2 cert1 = null;
-                if (fcollection.Count == 1)
-                {
-                    cert1 = fcollection[0];
-                }
-                else if (fcollection.Count > 1)
-                {
-                    try
-                    {
-                        cert1 = X509Certificate2UI.SelectFromCollection(fcollection, "Caption", "Message", X509SelectionFlag.SingleSelection)[0];
-                    }
-                    catch
-                    {
-                        this.Dispatcher.Invoke(new Action(() => MyMessageBox.ShowDialog("No Certificate Selected !")));
-                        this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
-                        this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
-                        return;
-                    }
-                }
-                X509Certificate2 certificate = cert1;
-
-                if (DateTime.Now > cert1.NotAfter)
-                {
-                    this.Dispatcher.Invoke(new Action(() => MyMessageBox.ShowDialog("Token Expired !")));
-                    this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
-                    this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
-                    return;
-                }
-
-                String StrRemark = this.Dispatcher.Invoke(new Func<string>(() => this.textRemark.Text.ToString()));
-                this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
-                Thread t = new Thread((ThreadStart)(() =>
-                {
-                    try
-                    {
-                        PdfReader reader = new PdfReader(filename);
-                        IExternalSignature es = new X509Certificate2Signature(cert1, "SHA-1", ref message);
-
-                        if (message != null)
-                        {
-                            reader.Close();
-                            this.Dispatcher.Invoke(new Action(() => MyMessageBox.ShowDialog(message)));
-                            this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
-                            this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
-                            return;
-                        }
-                        else
-                        {
-                            System.Windows.Forms.FolderBrowserDialog saveFileDialog = new System.Windows.Forms.FolderBrowserDialog();
-                            saveFileDialog.Description = "Select path to save file.";
-                            System.Windows.Forms.DialogResult result = saveFileDialog.ShowDialog();
-
-                            if (result == System.Windows.Forms.DialogResult.OK)
-                            {
-                                try
-                                {
-                                    download = saveFileDialog.SelectedPath + @"\";
-
-                                    if (es.GetEncryptionAlgorithm() != null)
-                                    {
-                                        Org.BouncyCastle.X509.X509CertificateParser cp1 = new Org.BouncyCastle.X509.X509CertificateParser();
-
-                                        Org.BouncyCastle.X509.X509Certificate[] chain3 = new[] { cp1.ReadCertificate(cert1.RawData) };
-
-                                        try
-                                        {
-                                            StampingProperties stampProp = new StampingProperties();
-                                            stampProp.PreserveEncryption();
-
-                                            ImageData imageData = null;
-                                            //Add icon on stamping
-                                            //21-11-2022 by Nitesh Vishwkarma
-
-                                            //change for icon of signature for remark 
-                                            //ver 1.2.0.1 // 30-12-2022 by Nitesh Vishwkarma 
-                                            if (StrRemark != "")
-                                            {
-                                                using (StreamReader sr = new StreamReader(System.Reflection.Assembly.GetEntryAssembly().Location.ToString().Replace("\\DGISAPP.exe", "") + @"\DigitalSign.png"))
-                                                {
-                                                    imageData = ImageDataFactory.Create(System.Reflection.Assembly.GetEntryAssembly().Location.ToString().Replace("\\DGISAPP.exe", "") + "\\DigitalSign.png");
-                                                }
-                                            }
-                                            else
-                                            {
-                                                using (StreamReader sr = new StreamReader(System.Reflection.Assembly.GetEntryAssembly().Location.ToString().Replace("\\DGISAPP.exe", "") + @"\DigitalSignWT.png"))
-                                                {
-                                                    imageData = ImageDataFactory.Create(System.Reflection.Assembly.GetEntryAssembly().Location.ToString().Replace("\\DGISAPP.exe", "") + "\\DigitalSignWT.png");
-                                                }
-                                            }
-
-                                            //Add UseAppendMode() for amendment of stamping
-                                            //21-11-2022 by Nitesh Vishwkarma
-                                            string[] SubjectSplit = cert1.Subject.Split(',');
-                                            string StrName = SubjectSplit[0].ToString().Replace("CN=", "").Trim();
-                                            string StrICNo = SubjectSplit[1].ToString().Replace("SERIALNUMBER=", "").Trim();
-                                            string StrRank = SubjectSplit[2].ToString().Replace("T=", "").Trim();
-
-                                            iText.Kernel.Pdf.PdfDocument pdfDocument = new iText.Kernel.Pdf.PdfDocument(new PdfReader(filename));
-                                            SignatureUtil signatureUtil = new SignatureUtil(pdfDocument);
-                                            IList<string> sigNames = signatureUtil.GetSignatureNames();
-                                            FileFullName = download + "\\" + fileName + "_DS_" + DateTime.Now.ToString("ddMMM") + "_" + DateTime.Now.Millisecond + ".pdf";
-
-                                            String StrSignature = "";
-                                            if (StrRemark != "")
-                                            {
-                                                StrSignature = StrRemark + "\n\n Digitally Signed by \n " + StrRank + " " + StrName + " \n Date : " + DateTime.Now.ToString("dd-MMM-yyyy HH:mm:ss") + " \n © DGIS App, IA";
-                                            }
-                                            else
-                                            {
-                                                StrSignature = "Digitally Signed by \n " + StrRank + " " + StrName + " \n Date : " + DateTime.Now.ToString("dd-MMM-yyyy HH:mm:ss") + " \n © DGIS App, IA";
-                                            }
-
-
-                                            if (custom == false)
-                                            {
-                                                if (sigNames.Count == 0)
-                                                {
-                                                    PdfSigner signer = new PdfSigner(reader, new FileStream(FileFullName, FileMode.Create), new StampingProperties());
-                                                    PdfSignatureAppearance appearance = signer.GetSignatureAppearance()
-                                                         .SetLayer2Text(StrSignature)
-                                                         .SetImage(imageData).SetImageScale(-50)
-                                                         .SetReuseAppearance(false);
-                                                    iText.Kernel.Geom.Rectangle rect = new iText.Kernel.Geom.Rectangle(220, 15, 180, 80);
-                                                    if (StrRemark == "")
-                                                    {
-                                                        rect = new iText.Kernel.Geom.Rectangle(220, 15, 180, 50);
-                                                    }
-
-                                                    appearance
-                                                            .SetPageRect(rect)
-                                                            .SetPageNumber(PageNum);
-                                                    signer.SetFieldName(signer.GetNewSigFieldName());
-                                                    //CADES
-
-                                                    //change CryptoStandard from CADES to CMS for display information of token in e-office
-                                                    //21-11-2022 by Nitesh Vishwkarma
-                                                    try
-                                                    {
-                                                        signer.SignDetached(es, chain3, null, null, null, 0, CryptoStandard.CMS);
-                                                    }
-                                                    catch(Exception ex)
-                                                    {
-                                                        ErrorEncountered = true;
-                                                        this.Dispatcher.Invoke(new Action(() => MyMessageBox.ShowDialog("No Docu Sign !")));
-                                                        this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
-                                                        this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
-                                                        ErrorLog.LogErrorToFile(ex);
-                                                    }
-                                                }
-                                                else
-                                                {
-                                                    PdfSigner signer = new PdfSigner(reader, new FileStream(FileFullName, FileMode.Create), stampProp.UseAppendMode());
-                                                    PdfSignatureAppearance appearance = signer.GetSignatureAppearance()
-                                                         .SetLayer2Text(StrSignature)
-                                                         .SetImage(imageData).SetImageScale(-50)
-                                                         .SetReuseAppearance(false);
-                                                    iText.Kernel.Geom.Rectangle rect = new iText.Kernel.Geom.Rectangle(220, 15, 180, 80);
-                                                    //Add 10 rectangle for stamping
-                                                    //21-11-2022 by Nitesh Vishwkarma
-
-                                                    //change for width of rectangle of remark 
-                                                    //ver 1.2.0.1 // 30-12-2022 by Nitesh Vishwkarma 
-                                                    if (signer.GetNewSigFieldName() == "Signature1")
-                                                    {
-                                                        if (StrRemark == "")
-                                                        {
-                                                            rect = new iText.Kernel.Geom.Rectangle(220, 15, 180, 50);
-                                                        }
-                                                        else
-                                                        {
-                                                            rect = new iText.Kernel.Geom.Rectangle(220, 15, 180, 80);
-                                                        }
-                                                    }
-                                                    else if (signer.GetNewSigFieldName() == "Signature2")
-                                                    {
-                                                        if (StrRemark == "")
-                                                        {
-                                                            rect = new iText.Kernel.Geom.Rectangle(40, 65, 180, 50);
-                                                        }
-                                                        else
-                                                        {
-                                                            rect = new iText.Kernel.Geom.Rectangle(40, 95, 180, 80);
-                                                        }
-                                                    }
-                                                    else if (signer.GetNewSigFieldName() == "Signature3")
-                                                    {
-                                                        if (StrRemark == "")
-                                                        {
-                                                            rect = new iText.Kernel.Geom.Rectangle(220, 65, 180, 50);
-                                                        }
-                                                        else
-                                                        {
-                                                            rect = new iText.Kernel.Geom.Rectangle(220, 95, 180, 80);
-                                                        }
-                                                    }
-                                                    else if (signer.GetNewSigFieldName() == "Signature4")
-                                                    {
-                                                        if (StrRemark == "")
-                                                        {
-                                                            rect = new iText.Kernel.Geom.Rectangle(400, 65, 180, 50);
-                                                        }
-                                                        else
-                                                        {
-                                                            rect = new iText.Kernel.Geom.Rectangle(400, 95, 180, 80);
-                                                        }
-                                                    }
-                                                    else if (signer.GetNewSigFieldName() == "Signature5")
-                                                    {
-                                                        if (StrRemark == "")
-                                                        {
-                                                            rect = new iText.Kernel.Geom.Rectangle(40, 115, 180, 50);
-                                                        }
-                                                        else
-                                                        {
-                                                            rect = new iText.Kernel.Geom.Rectangle(40, 175, 180, 80);
-                                                        }
-
-                                                    }
-                                                    else if (signer.GetNewSigFieldName() == "Signature6")
-                                                    {
-                                                        if (StrRemark == "")
-                                                        {
-                                                            rect = new iText.Kernel.Geom.Rectangle(220, 115, 180, 50);
-                                                        }
-                                                        else
-                                                        {
-                                                            rect = new iText.Kernel.Geom.Rectangle(220, 175, 180, 80);
-                                                        }
-                                                    }
-                                                    else if (signer.GetNewSigFieldName() == "Signature7")
-                                                    {
-                                                        if (StrRemark == "")
-                                                        {
-                                                            rect = new iText.Kernel.Geom.Rectangle(400, 115, 180, 50);
-                                                        }
-                                                        else
-                                                        {
-                                                            rect = new iText.Kernel.Geom.Rectangle(400, 175, 180, 80);
-                                                        }
-                                                    }
-                                                    else if (signer.GetNewSigFieldName() == "Signature8")
-                                                    {
-                                                        if (StrRemark == "")
-                                                        {
-                                                            rect = new iText.Kernel.Geom.Rectangle(40, 165, 180, 50);
-                                                        }
-                                                        else
-                                                        {
-                                                            rect = new iText.Kernel.Geom.Rectangle(40, 225, 180, 80);
-                                                        }
-                                                    }
-                                                    else if (signer.GetNewSigFieldName() == "Signature9")
-                                                    {
-                                                        if (StrRemark == "")
-                                                        {
-                                                            rect = new iText.Kernel.Geom.Rectangle(220, 165, 180, 50);
-                                                        }
-                                                        else
-                                                        {
-                                                            rect = new iText.Kernel.Geom.Rectangle(220, 225, 180, 80);
-                                                        }
-                                                    }
-                                                    else if (signer.GetNewSigFieldName() == "Signature10")
-                                                    {
-                                                        if (StrRemark == "")
-                                                        {
-                                                            rect = new iText.Kernel.Geom.Rectangle(400, 165, 180, 50);
-                                                        }
-                                                        else
-                                                        {
-                                                            rect = new iText.Kernel.Geom.Rectangle(400, 225, 180, 80);
-                                                        }
-                                                    }
-                                                    appearance
-                                                            .SetPageRect(rect)
-                                                            .SetPageNumber(PageNum);
-                                                    signer.SetFieldName(signer.GetNewSigFieldName());
-                                                    //CADES
-
-                                                    //change CryptoStandard from CADES to CMS for display information of token in e-office
-                                                    //21-11-2022 by Nitesh Vishwkarma
-                                                    try
-                                                    {
-                                                        signer.SignDetached(es, chain3, null, null, null, 0, CryptoStandard.CMS);
-                                                    }
-                                                    catch(Exception ex)
-                                                    {
-                                                        reader.Close();
-                                                        ErrorEncountered = true;
-                                                        this.Dispatcher.Invoke(new Action(() => MyMessageBox.ShowDialog("No Docu Sign !")));
-                                                        this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
-                                                        this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
-                                                        ErrorLog.LogErrorToFile(ex);
-                                                    }
-                                                }
-                                            }
-                                            else
-                                            {
-                                                if (sigNames.Count == 0)
-                                                {
-                                                    PdfSigner signer = new PdfSigner(reader, new FileStream(FileFullName, FileMode.Create), new StampingProperties());
-                                                    PdfSignatureAppearance appearance = signer.GetSignatureAppearance()
-                                                         .SetLayer2Text(StrSignature)
-                                                         .SetImage(imageData).SetImageScale(-50)
-                                                         .SetReuseAppearance(false);
-                                                    iText.Kernel.Geom.Rectangle rect = new iText.Kernel.Geom.Rectangle(X, Y, 180, 80);
-                                                    //change for width of rectangle of remark 
-                                                    //ver 1.2.0.1 // 30-12-2022 by Nitesh Vishwkarma 
-                                                    if (StrRemark == "")
-                                                    {
-                                                        rect = new iText.Kernel.Geom.Rectangle(X, Y, 180, 50);
-                                                    }
-                                                    else
-                                                    {
-                                                        rect = new iText.Kernel.Geom.Rectangle(X, Y, 180, 80);
-                                                    }
-
-                                                    appearance
-                                                            .SetPageRect(rect)
-                                                            .SetPageNumber(PageNum);
-                                                    signer.SetFieldName(signer.GetNewSigFieldName());
-                                                    //CADES
-
-                                                    //change CryptoStandard from CADES to CMS for display information of token in e-office
-                                                    //21-11-2022 by Nitesh Vishwkarma
-                                                    try
-                                                    {
-                                                        signer.SignDetached(es, chain3, null, null, null, 0, CryptoStandard.CMS);
-                                                    }
-                                                    catch(Exception ex)
-                                                    {
-                                                        reader.Close();
-                                                        ErrorEncountered = true;
-                                                        this.Dispatcher.Invoke(new Action(() => MyMessageBox.ShowDialog("No Docu Sign !")));
-                                                        this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
-                                                        this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
-                                                        ErrorLog.LogErrorToFile(ex);
-                                                    }
-                                                }
-                                                else
-                                                {
-                                                    PdfSigner signer = new PdfSigner(reader, new FileStream(FileFullName, FileMode.Create), stampProp.UseAppendMode());
-                                                    PdfSignatureAppearance appearance = signer.GetSignatureAppearance()
-                                                         .SetLayer2Text(StrSignature)
-                                                         .SetImage(imageData).SetImageScale(-50)
-                                                         .SetReuseAppearance(false);
-                                                    iText.Kernel.Geom.Rectangle rect = new iText.Kernel.Geom.Rectangle(X, Y, 180, 80);
-                                                    //change for width of rectangle of remark 
-                                                    //ver 1.2.0.1 // 30-12-2022 by Nitesh Vishwkarma 
-                                                    if (StrRemark == "")
-                                                    {
-                                                        rect = new iText.Kernel.Geom.Rectangle(X, Y, 180, 50);
-                                                    }
-                                                    else
-                                                    {
-                                                        rect = new iText.Kernel.Geom.Rectangle(X, Y, 180, 80);
-                                                    }
-                                                    appearance
-                                                           .SetPageRect(rect)
-                                                           .SetPageNumber(PageNum);
-                                                    signer.SetFieldName(signer.GetNewSigFieldName());
-                                                    //CADES
-
-                                                    //change CryptoStandard from CADES to CMS for display information of token in e-office
-                                                    //21-11-2022 by Nitesh Vishwkarma
-                                                    try
-                                                    {
-                                                        signer.SignDetached(es, chain3, null, null, null, 0, CryptoStandard.CMS);
-                                                    }
-                                                    catch(Exception ex)
-                                                    {
-                                                        reader.Close();
-                                                        ErrorEncountered = true;
-                                                        this.Dispatcher.Invoke(new Action(() => MyMessageBox.ShowDialog("No Docu Sign !")));
-                                                        this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
-                                                        this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
-                                                        ErrorLog.LogErrorToFile(ex);
-                                                    }
-                                                }
-                                            }
-                                            reader.Close();
-                                            if (ErrorEncountered == false)
-                                            {
-                                                success = true;
-                                            }
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                            reader.Close();
-                                            this.Dispatcher.Invoke(new Action(() => MyMessageBox.ShowDialog(ex.Message)));
-                                            this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
-                                            this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
-                                            ErrorLog.LogErrorToFile(ex);
-                                            return;
-                                        }
-                                    }
-                                }
-                                catch (Exception ex)
-                                {
-                                    reader.Close();
-                                    this.Dispatcher.Invoke(new Action(() => MyMessageBox.ShowDialog(ex.Message)));
-                                    this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
-                                    this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
-                                    ErrorLog.LogErrorToFile(ex);
-                                    return;
-                                }
-                            }
-                            else
-                            {
-                                reader.Close();
-                                ErrorEncountered = true;
-                                this.Dispatcher.Invoke(new Action(() => MyMessageBox.ShowDialog("No Docu Sign !")));
-                                this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
-                                this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
-
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        this.Dispatcher.Invoke(new Action(() => MyMessageBox.ShowDialog(ex.Message)));
-                        this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
-                        ErrorLog.LogErrorToFile(ex);
-                        return;
-                    }
-                }));
-
-                // Run your code from a thread that joins the STA Thread
-                t.SetApartmentState(ApartmentState.STA);
-                t.Start();
-                t.Join();
-                this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
-                if (success)
-                {
-                    FileFullName = "";
-                    this.Dispatcher.Invoke(new Action(() => MyMessageBox.Show("Congratulations !\n\n Document is Digitally Signed. \n " + System.IO.Path.GetDirectoryName(download))));
-                }
-            }
-        }
-
+        /// <summary>
+        /// Pdf signature default and custom
+        /// </summary>
+      
         public async void SignDocument(string downloadfilePath,string filename, int PageNum, int X = 0, int Y = 0, Boolean custom = false, Boolean BlnCheckCrl = false, CancellationToken cancellationToken = default(CancellationToken))
         {
             bool ValidToken = false;
@@ -1333,13 +857,13 @@ namespace DGISApp
 
                     cert1 = certCollection[0];
 
-                    if (DateTime.Now > cert1.NotAfter)
-                    {
-                        this.Dispatcher.Invoke(new Action(() => MyMessageBox.ShowDialog("Token is expired. Pl contact issuer !")));
-                        this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
-                        this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
-                        return;
-                    }
+                    //if (DateTime.Now > cert1.NotAfter)
+                    //{
+                    //    this.Dispatcher.Invoke(new Action(() => MyMessageBox.ShowDialog("Token is expired. Pl contact issuer !")));
+                    //    this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
+                    //    this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
+                    //    return;
+                    //}
 
                     if (CheckCrlTick == true)
                     {
@@ -1891,7 +1415,7 @@ namespace DGISApp
             }
         }
 
-        private void pdfdoc_MouseUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        private async void pdfdoc_MouseUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             System.Drawing.Point position = new System.Drawing.Point
             {
@@ -1906,7 +1430,7 @@ namespace DGISApp
 
             if (MyMessageBox.ShowDialog("Do you want to sign here ?", MyMessageBox.Buttons.Yes_No) == "1")
             {
-                if (IsConnectedToInternet())
+                if (await IsConnectedToInternet())
                 {
                     onlineDigitalSig(bytes, x, y);
                 }

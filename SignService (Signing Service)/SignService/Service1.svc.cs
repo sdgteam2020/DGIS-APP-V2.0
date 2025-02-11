@@ -937,23 +937,26 @@ namespace SignService
                     resultstring += apiResponse.ResponseMessage.Message + "\n";
                     Signed = 1;
                 }
-                foreach (ResponseMessage data in apiResponse.ResponseMessagelst)
+                if (apiResponse.ResponseMessagelst != null)
                 {
-
-                    if (count == 0)
+                    foreach (ResponseMessage data in apiResponse.ResponseMessagelst)
                     {
-                        resultstring += "\n Opps!\nDocument is Not successfully Signed.\n";
-                        resultstring += "This Docu Not Sign Either Password Protected or Page Not Found.\n";
 
-                        count++;
+                        if (count == 0)
+                        {
+                            resultstring += "\n Opps!\nDocument is Not successfully Signed.\n";
+                            resultstring += "This Docu Not Sign Either Password Protected or Page Not Found.\n";
+
+                            count++;
+                        }
+
+                        resultstring += data.Message + "\n ";
+
+
+
+
+
                     }
-
-                    resultstring += data.Message + "\n ";
-
-
-
-
-
                 }
                 if (resultstring != "")
                 {
@@ -988,7 +991,11 @@ namespace SignService
             }
             return responseMessage;
         }
-
+        /// <summary>
+        //Command For Api And Application
+        /// </summary>
+        /// <param name="reqData"></param>
+        /// <returns></returns>
         public async Task<ResponseBulkSign> DigitalSignBulkAsync(List<DigitalSignData> reqData)
         {
             string message = null;
@@ -1031,25 +1038,26 @@ namespace SignService
 
                 X509Certificate2 cert1 = certCollection[0];
 
-                if (DateTime.Now > cert1.NotAfter)
-                {
-                    ResponseMsg.Message = "Token Expired !";
-                    ResponseMsg.Valid = false;
-                    ResponseMsgbullst.ResponseMessage = ResponseMsg;
-                    return ResponseMsgbullst;
-                }
+                //if (DateTime.Now > cert1.NotAfter)
+                //{
+                //    ResponseMsg.Message = "Token Expired !";
+                //    ResponseMsg.Valid = false;
+                //    ResponseMsgbullst.ResponseMessage = ResponseMsg;
+                //    return ResponseMsgbullst;
+                //}
 
 
-                string[] files = Directory.GetFiles(reqData.First().InputFileLoc);
+                string[] files = Directory.GetFiles(reqData.First().FolderLoc);
 
                 int totalFiles = files.Count();
                 int SingedFiles = 0;
                 PdfSigner signer = null;
                 FileStream fileStream = null;
-                string Download = reqData.First().OutputFileLoc;
+                string Download = reqData.First().OutputFolderLoc;
 
                 int Xaxis = reqData.First().XCoordinate;
                 int Yaxis = reqData.First().YCoordinate;
+                string CustomText= reqData.First().CustomText;
                 if (reqData.First().Page != 0)
                 {
                     Pageno = reqData.First().Page;
@@ -1114,7 +1122,10 @@ namespace SignService
                                     IList<string> sigNames = signatureUtil.GetSignatureNames();
                                     iText.Kernel.Font.PdfFont font = PdfFontFactory.CreateFont(FontProgramFactory.CreateFont(StandardFonts.TIMES_BOLD));
                                     String StrSignature = "";
-                                    StrSignature = "Digitally Signed by \n " + StrRank + " " + StrName + " \n Date : " + DateTime.Now.ToString("dd-MMM-yyyy HH:mm:ss") + " \n © DGIS App, IA";
+                                    if (CustomText != "")
+                                        StrSignature = CustomText + "\n\n Digitally Signed by \n " + StrRank + " " + StrName + " \n Date : " + DateTime.Now.ToString("dd-MMM-yyyy HH:mm:ss") + " \n © DGIS App, IA";
+                                    else
+                                        StrSignature = "Digitally Signed by \n " + StrRank + " " + StrName + " \n Date : " + DateTime.Now.ToString("dd-MMM-yyyy HH:mm:ss") + " \n © DGIS App, IA";
 
                                     try
                                     {
@@ -1349,18 +1360,19 @@ namespace SignService
 
                 X509Certificate2 cert1 = certCollection[0];
 
-                if (DateTime.Now > cert1.NotAfter)
-                {
-                    ResponseMsg.Message = "Token Expired !";
-                    ResponseMsg.Valid = false;
-                    return ResponseMsg;
-                }
+                //if (DateTime.Now > cert1.NotAfter)
+                //{
+                //    ResponseMsg.Message = "Token Expired !";
+                //    ResponseMsg.Valid = false;
+                //    return ResponseMsg;
+                //}
 
 
 
                 int Xaxis = reqData.First().XCoordinate;
                 int Yaxis = reqData.First().YCoordinate;
                 string pathss = reqData.First().pdfpath;
+                string CustomText=reqData.First().CustomText;
                 ServicePointManager.ServerCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true;
                 System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
                 WebClient client = new WebClient();
@@ -1412,10 +1424,33 @@ namespace SignService
                                     IList<string> sigNames = signatureUtil.GetSignatureNames();
                                     iText.Kernel.Font.PdfFont font = PdfFontFactory.CreateFont(FontProgramFactory.CreateFont(StandardFonts.TIMES_BOLD));
                                     String StrSignature = "";
+                                    if(CustomText!="")
+                                    StrSignature = CustomText + "\n\n Digitally Signed by \n " + StrRank + " " + StrName + " \n Date : " + DateTime.Now.ToString("dd-MMM-yyyy HH:mm:ss") + " \n © DGIS App, IA";
+                                    else
                                     StrSignature = "Digitally Signed by \n " + StrRank + " " + StrName + " \n Date : " + DateTime.Now.ToString("dd-MMM-yyyy HH:mm:ss") + " \n © DGIS App, IA";
 
                                     try
                                     {
+                                        var getXYaxis = GetSignatureCordinate(pathss);
+                                        if (getXYaxis != null)
+                                        {
+                                            if (sigNames.Count % 2 == 0)
+                                            {
+                                                Yaxis = getXYaxis[sigNames.Count - 1].YCoordinate + 50;
+                                                Xaxis = getXYaxis[0].XCoordinate;
+                                            }
+                                            else
+                                            {
+                                                Yaxis = getXYaxis[sigNames.Count - 1].YCoordinate;
+                                                Xaxis = getXYaxis[sigNames.Count - 1].XCoordinate + 200;
+                                                if (Xaxis > 300)
+                                                {
+                                                    Yaxis = getXYaxis[sigNames.Count - 1].YCoordinate + 50;
+                                                    Xaxis = getXYaxis[0].XCoordinate;
+                                                }
+                                            }
+                                        }
+
                                         PdfSigner signer = new PdfSigner(reader, ms, new StampingProperties());
                                         PdfSignatureAppearance appearance = signer.GetSignatureAppearance()
                                             .SetLayer2Text(StrSignature)

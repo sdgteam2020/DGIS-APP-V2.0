@@ -193,9 +193,9 @@ namespace SignService
         [DataMember]
         public String Thumbprint { get; set; }
         [DataMember]
-        public String InputFileLoc { get; set; }
+        public String FolderLoc { get; set; }
         [DataMember]
-        public String OutputFileLoc { get; set; }
+        public String OutputFolderLoc { get; set; }
         [DataMember]       
         public string pdfpath { get; set; }
         [DataMember]
@@ -204,6 +204,9 @@ namespace SignService
         public int YCoordinate { get; set; }
         [DataMember]
         public int Page { get; set; }
+        [DataMember]
+        public string CustomText { get; set; }
+
     }
 
 
