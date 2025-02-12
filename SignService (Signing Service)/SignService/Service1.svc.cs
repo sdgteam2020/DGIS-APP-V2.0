@@ -225,7 +225,14 @@ namespace SignService
 
                     //Extracting Personal No from unique token 
                     string[] SubjectSplit = cert1.Subject.Split(',');
-                    string PersNo= SubjectSplit[1].ToString().Replace("SERIALNUMBER=", "").Trim();
+                   // string PersNo = SubjectSplit[1].ToString().Replace("SERIALNUMBER=", "").Trim();
+                    string PersNo = "";
+                    for (int i=0; i< SubjectSplit.Length;i++)
+                    {
+                        if (SubjectSplit[i].Contains("SERIALNUMBER"))
+                        PersNo = SubjectSplit[i].ToString().Replace("SERIALNUMBER=", "").Trim();
+                    }
+                   
 
 
                     bool TokenValidity = false;
@@ -1941,7 +1948,7 @@ namespace SignService
                 {
                     var TokenDetails = new TokenDetails
                     {
-                        API = "https://dgisapp.army.mil:55102/Temporary_Listen_Addresses/FetchPersID",
+                        API = "https://dgisapp.army.mil:55102/Temporary_Listen_Addresses/GetPublicKey",
                         CRL_OCSPCheck = false,
                         Status = "404",
                         Remarks = "Certificate not Found. Please insert valid Token and Try agian!"
@@ -1988,7 +1995,7 @@ namespace SignService
                         var TokenDetails = new TokenDetails
                         {
 
-                            API = "https://dgisapp.army.mil:55102/Temporary_Listen_Addresses/FetchPersID",
+                            API = "https://dgisapp.army.mil:55102/Temporary_Listen_Addresses/GetPublicKey",
                             CRL_OCSPCheck = false,
                             subject = PersNo,//cert1.Subject,
                             issuer = null, //cert1.Issuer,

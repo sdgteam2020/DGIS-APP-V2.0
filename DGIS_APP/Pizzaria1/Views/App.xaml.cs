@@ -44,53 +44,6 @@ namespace DGISApp
         }
         ServiceHost host = null;
        
-        private static string ExecuteNetshCommand(string arguments)
-        {
-            try
-            {
-                ProcessStartInfo processInfo = new ProcessStartInfo
-                {
-                  
-                    FileName = "cmd.exe",
-                    Arguments = "/c " + arguments, // "/c" means execute and terminate
-                    Verb = "runas", // This makes the process run as administrator
-                    RedirectStandardOutput = true, // Capture output
-                    RedirectStandardError = true,  // Capture errors
-                    UseShellExecute = false, // Required for redirecting output
-                    CreateNoWindow = true    // Prevents showing a command window
-                };
-
-                using (Process process = new Process())
-                {
-                    process.StartInfo = processInfo;
-                    process.Start();
-
-                    string output = process.StandardOutput.ReadToEnd();
-                    string error = process.StandardError.ReadToEnd();
-                    process.WaitForExit();
-
-                    if (!string.IsNullOrWhiteSpace(error))
-                    {
-                        throw new Exception($"Error: {error}");
-                    }
-
-                    //Console.WriteLine("Command executed successfully.");
-                    return (output);
-                }
-            }
-            catch (Exception ex)
-            {
-                ErrorLog.LogErrorToFile(ex);
-                return ($"Exception: {ex.Message}");
-                
-            }
-        }
-        public static string AddSslCert(string ipPort, string certHash, string appId)
-        {
-            string command = $"netsh http add sslcert ipport={ipPort} certhash={certHash} appid=\"{appId}\" certstorename=MY";
-            return ExecuteNetshCommand(command);
-        }
-       
         private void Application_Startup(object sender, StartupEventArgs e)
         {
             try
@@ -166,15 +119,9 @@ namespace DGISApp
                 //MessageBox.Show(ex.Message);
                 ErrorLog.LogErrorToFile(ex);
             }
-            RemoveDesktop();
-
-
-           
+          
         }
-        private void RemoveDesktop()
-        {
-           
-        }
+      
         public X509Certificate2 DownloadCert(string url)
         {
 

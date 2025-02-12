@@ -9,7 +9,7 @@ namespace SignService
 {
     public class ErrorLog 
     {
-        public static void LogErrorToFile(Exception ex)
+        public static void LogErrorToFile(Exception ex,string error="")
         {
             IPAddress[] a = Dns.GetHostByName(Dns.GetHostName()).AddressList;
            
@@ -23,7 +23,10 @@ namespace SignService
             errorMessage += "\n Machine Name: " + Environment.MachineName;
             errorMessage += "\n System Directory: " + Environment.SystemDirectory;
             errorMessage += "\n User Name: " + Environment.UserName;
+            if(ex!=null)
             errorMessage += $"[{DateTime.Now}] \n Exception: {ex.Message}\n Stack Trace: {ex.StackTrace}";
+            else
+            errorMessage += $"[{DateTime.Now}] \n Error: {error}";
             errorMessage += "\n*********************************************************************************************************************\n";
             try
             {

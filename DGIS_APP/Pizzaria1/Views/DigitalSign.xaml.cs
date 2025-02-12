@@ -184,37 +184,6 @@ namespace DGISApp
             }
         }
 
-        //static bool HasInternetConnectionAsync()
-        //{
-        //    try
-        //    {
-        //        using (var httpClient = new HttpClient())
-        //        {
-
-        //            httpClient.Timeout = TimeSpan.FromSeconds(1); // Adjust the timeout as needed
-
-        //            var response = httpClient.GetAsync(ConfigurationManager.AppSettings["HasInternetConnection"]);
-        //            //var response = httpClient.GetAsync("https://www.google.com");
-
-        //            // Check if the response status code indicates success
-        //            if (response.Result.IsSuccessStatusCode)
-        //            {
-        //                return true;
-        //            }
-        //            else
-        //            {
-        //                return false;
-        //            }
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        MyMessageBox.ShowDialog("Error while executing HasInternetConnectionAsync Reason:- " + ex.Message);
-        //        return false; // Return false if the operation was cancelled due to network not connected
-        //    }
-
-        //}
-
         private void DropList_DragEnter(object sender, DragEventArgs e)
         {
 
@@ -1695,8 +1664,5 @@ namespace DGISApp
         }
 
 
-
-
-       
     }
 }
